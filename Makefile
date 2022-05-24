@@ -56,7 +56,7 @@
 BASE_VERSION = 1.4.0-rc.1
 SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
 BRANCH_NAME = $(shell git rev-parse --abbrev-ref HEAD | tr -d [:punct:])
-VERSION = $(BASE_VERSION)-$(SHORT_SHA)
+VERSION = $(BASE_VERSION)
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 YEAR_MONTH = $(shell date -u +'%Y%m')
 YEAR_MONTH_DAY = $(shell date -u +'%Y%m%d')
@@ -84,11 +84,11 @@ BUILD_DIR = $(REPOSITORY_ROOT)/build
 TOOLCHAIN_DIR = $(BUILD_DIR)/toolchain
 TOOLCHAIN_BIN = $(TOOLCHAIN_DIR)/bin
 PROTOC_INCLUDES := $(REPOSITORY_ROOT)/third_party
-GCP_PROJECT_ID ?=
+GCP_PROJECT_ID = open-match-public-images
 GCP_PROJECT_FLAG = --project=$(GCP_PROJECT_ID)
 OPEN_MATCH_BUILD_PROJECT_ID = open-match-build
 OPEN_MATCH_PUBLIC_IMAGES_PROJECT_ID = open-match-public-images
-REGISTRY ?= gcr.io/$(GCP_PROJECT_ID)
+REGISTRY = gcr.io/$(GCP_PROJECT_ID)
 TAG = $(VERSION)
 ALTERNATE_TAG = dev
 VERSIONED_CANARY_TAG = $(BASE_VERSION)-canary
@@ -343,10 +343,14 @@ install-large-chart: install-chart-prerequisite install-demo build/toolchain/bin
 		--set global.telemetry.prometheus.enabled=true
 
 # install-chart will install open-match-core, open-match-demo, with the demo evaluator and mmf.
-install-chart: install-chart-prerequisite install-demo build/toolchain/bin/helm$(EXE_EXTENSION) install/helm/open-match/secrets/
+install-chart: install-chart-prerequisite build/toolchain/bin/helm$(EXE_EXTENSION) install/helm/open-match/secrets/
 	$(HELM) upgrade $(OPEN_MATCH_HELM_NAME) $(HELM_UPGRADE_FLAGS) --atomic install/helm/open-match $(HELM_IMAGE_FLAGS) \
+		--set open-match-telemetry.enabled=true \
 		--set open-match-customize.enabled=true \
-		--set open-match-customize.evaluator.enabled=true
+		--set open-match-customize.evaluator.enabled=true \
+		--set global.telemetry.grafana.enabled=true \
+		--set global.telemetry.jaeger.enabled=false \
+		--set global.telemetry.prometheus.enabled=true
 
 # install-scale-chart will wait for installing open-match-core with telemetry supports then install open-match-scale chart.
 install-scale-chart: install-chart-prerequisite build/toolchain/bin/helm$(EXE_EXTENSION) install/helm/open-match/secrets/
@@ -636,7 +640,7 @@ delete-kind-cluster: build/toolchain/bin/kind$(EXE_EXTENSION) build/toolchain/bi
 create-cluster-role-binding:
 	$(KUBECTL) create clusterrolebinding myname-cluster-admin-binding --clusterrole=cluster-admin --user=$(GCLOUD_ACCOUNT_EMAIL)
 
-create-gke-cluster: GKE_VERSION = 1.20.8-gke.900 # gcloud beta container get-server-config --zone us-west1-a
+create-gke-cluster: GKE_VERSION = 1.21.11-gke.900 # gcloud beta container get-server-config --zone us-west1-a
 create-gke-cluster: GKE_CLUSTER_SHAPE_FLAGS = --machine-type n1-standard-8 --enable-autoscaling --min-nodes 1 --num-nodes 6 --max-nodes 10 --disk-size 50
 create-gke-cluster: GKE_FUTURE_COMPAT_FLAGS = --no-enable-basic-auth --no-issue-client-certificate --enable-ip-alias --metadata disable-legacy-endpoints=true --enable-autoupgrade
 create-gke-cluster: build/toolchain/bin/kubectl$(EXE_EXTENSION) gcloud
@@ -644,8 +648,7 @@ create-gke-cluster: build/toolchain/bin/kubectl$(EXE_EXTENSION) gcloud
 		--enable-pod-security-policy \
 		--cluster-version $(GKE_VERSION) \
 		--image-type cos_containerd \
-		--tags open-match \
-		--workload-pool $(PROJECT_ID).svc.id.goog
+		--tags open-match 
 	$(MAKE) create-cluster-role-binding
 	
 
