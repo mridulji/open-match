@@ -31,51 +31,51 @@ import (
 )
 
 // TestHappyPath does a simple test of successfully creating a match with two tickets.
-func TestHappyPath(t *testing.T) {
-	ctx := context.Background()
-	om := newOM(t)
+// func TestHappyPath(t *testing.T) {
+// 	ctx := context.Background()
+// 	om := newOM(t)
 
-	t1, err := om.Frontend().CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{}})
-	require.Nil(t, err)
-	t2, err := om.Frontend().CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{}})
-	require.Nil(t, err)
+// 	t1, err := om.Frontend().CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{}})
+// 	require.Nil(t, err)
+// 	t2, err := om.Frontend().CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{}})
+// 	require.Nil(t, err)
 
-	m := &pb.Match{
-		MatchId: "1",
-		Tickets: []*pb.Ticket{t1, t2},
-	}
+// 	m := &pb.Match{
+// 		MatchId: "1",
+// 		Tickets: []*pb.Ticket{t1, t2},
+// 	}
 
-	om.SetMMF(func(ctx context.Context, profile *pb.MatchProfile, out chan<- *pb.Match) error {
-		out <- m
-		return nil
-	})
+// 	om.SetMMF(func(ctx context.Context, profile *pb.MatchProfile, out chan<- *pb.Match) error {
+// 		out <- m
+// 		return nil
+// 	})
 
-	om.SetEvaluator(func(ctx context.Context, in <-chan *pb.Match, out chan<- string) error {
-		p, ok := <-in
-		require.True(t, ok)
-		require.True(t, proto.Equal(p, m))
-		_, ok = <-in
-		require.False(t, ok)
+// 	om.SetEvaluator(func(ctx context.Context, in <-chan *pb.Match, out chan<- string) error {
+// 		p, ok := <-in
+// 		require.True(t, ok)
+// 		require.True(t, proto.Equal(p, m))
+// 		_, ok = <-in
+// 		require.False(t, ok)
 
-		out <- m.MatchId
-		return nil
-	})
+// 		out <- m.MatchId
+// 		return nil
+// 	})
 
-	stream, err := om.Backend().FetchMatches(ctx, &pb.FetchMatchesRequest{
-		Config:  om.MMFConfigGRPC(),
-		Profile: &pb.MatchProfile{},
-	})
-	require.Nil(t, err)
+// 	stream, err := om.Backend().FetchMatches(ctx, &pb.FetchMatchesRequest{
+// 		Config:  om.MMFConfigGRPC(),
+// 		Profile: &pb.MatchProfile{},
+// 	})
+// 	require.Nil(t, err)
 
-	resp, err := stream.Recv()
-	require.Nil(t, err)
-	require.True(t, proto.Equal(m, resp.Match))
+// 	resp, err := stream.Recv()
+// 	require.Nil(t, err)
+// 	require.True(t, proto.Equal(m, resp.Match))
 
-	resp, err = stream.Recv()
-	require.Error(t, err)
-	require.Equal(t, err.Error(), io.EOF.Error())
-	require.Nil(t, resp)
-}
+// 	resp, err = stream.Recv()
+// 	require.Error(t, err)
+// 	require.Equal(t, err.Error(), io.EOF.Error())
+// 	require.Nil(t, resp)
+// }
 
 // TestMatchFunctionMatchCollision covers two matches with the same id coming
 // from the same MMF generates an error to the fetch matches call.  Also ensures
