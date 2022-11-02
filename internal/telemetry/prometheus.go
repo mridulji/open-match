@@ -16,6 +16,8 @@ package telemetry
 
 // Taken from https://opencensus.io/quickstart/go/metrics/#1
 import (
+	"strings"
+
 	ocPrometheus "contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -53,9 +55,17 @@ func bindPrometheus(p Params, b Bindings) error {
 		return errors.Wrap(err, "Failed to register prometheus collector")
 	}
 
+	var namespace string
+	if !cfg.GetBool("telemetry.toDeployNewInstance") {
+		namespace = strings.TrimSpace(cfg.GetString("telemetry.alreadyDeployedNamespace"))
+		if namespace == "" {
+			return errors.New(" config value for telemetry.alreadyDeployedNamespace is not provided.")
+		}
+	}
+
 	promExporter, err := ocPrometheus.NewExporter(
 		ocPrometheus.Options{
-			Namespace: "",
+			Namespace: namespace,
 			Registry:  registry,
 		})
 	if err != nil {

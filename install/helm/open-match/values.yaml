@@ -280,6 +280,8 @@ global:
   # requires pod-level annotation to customize its scrape path.
   # See definitions in templates/_helpers.tpl - "prometheus.annotations" section for details
   telemetry:
+    toDeployNewInstance: false
+    alreadyDeployedNamespace: ""
     reportingPeriod: "1m"
     traceSamplingFraction: 0.01 # What fraction of traces to sample.
     zpages:

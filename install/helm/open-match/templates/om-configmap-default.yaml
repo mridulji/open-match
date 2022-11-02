@@ -114,6 +114,8 @@ data:
 
     telemetry:
       reportingPeriod: "{{ .Values.global.telemetry.reportingPeriod }}"
+      toDeployNewInstance: "{{ .Values.global.telemetry.toDeployNewInstance }}"
+      alreadyDeployedNamespace: "{{ .Values.global.telemetry.alreadyDeployedNamespace }}"
       traceSamplingFraction: "{{ .Values.global.telemetry.traceSamplingFraction }}"
       zpages:
         enable: "{{ .Values.global.telemetry.zpages.enabled }}"
